@@ -21,10 +21,6 @@
             android:icon="@drawable/database"
             android:title="Base de Datos" />
         <item
-            android:id="@+id/nav_energy"
-            android:icon="@drawable/bolt"
-            android:title="Energia" />
-        <item
             android:id="@+id/nav_charts"
             android:icon="@drawable/chart_data"
             android:title="Graficas" />

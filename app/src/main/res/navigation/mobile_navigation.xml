@@ -27,11 +27,6 @@
         android:label="Base de Datos"
         tools:layout="@layout/fragment_data_base" />
     <fragment
-        android:id="@+id/nav_energy"
-        android:name="com.example.proyectounidadiii.ui.energy.EnergyFragment"
-        android:label="Energia"
-        tools:layout="@layout/fragment_energy" />
-    <fragment
         android:id="@+id/nav_charts"
         android:name="com.example.proyectounidadiii.ui.charts.ChartsFragment"
         android:label="Graficas"

@@ -31,4 +31,14 @@
         android:name="com.example.proyectounidadiii.ui.charts.ChartsFragment"
         android:label="Graficas en tiempo real"
         tools:layout="@layout/fragment_charts" />
+    <fragment
+        android:id="@+id/nav_control"
+        android:name="com.example.proyectounidadiii.ui.control.ControlFragment"
+        android:label="Control"
+        tools:layout="@layout/fragment_control" />
+    <fragment
+        android:id="@+id/nav_tables"
+        android:name="com.example.proyectounidadiii.ui.tables.TablesFragment"
+        android:label="Tablas"
+        tools:layout="@layout/fragment_tables" />
 </navigation>

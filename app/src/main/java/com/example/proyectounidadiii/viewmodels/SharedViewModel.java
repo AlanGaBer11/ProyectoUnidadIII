@@ -179,12 +179,16 @@ public class SharedViewModel extends ViewModel {
     }
 
     public void enviarComando(String comando) {
-        if (out != null) {
+        if (out != null && socket != null && socket.isConnected()) {
             try {
                 out.write((comando + "\n").getBytes());
+                Log.d("SharedViewModel", "Comando enviado: " + comando);
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e("SharedViewModel", "Error al enviar comando", e);
+                estado.postValue("Error de conexión");
             }
+        } else {
+            estado.postValue("No conectado");
         }
     }
 

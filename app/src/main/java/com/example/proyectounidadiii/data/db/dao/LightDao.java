@@ -1,6 +1,7 @@
 package com.example.proyectounidadiii.data.db.dao;
 
 import androidx.lifecycle.LiveData;
+import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -9,6 +10,7 @@ import com.example.proyectounidadiii.data.db.entities.LightEntity;
 
 import java.util.List;
 
+@Dao
 public interface LightDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insert(LightEntity entity);

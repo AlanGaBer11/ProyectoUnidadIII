@@ -4,8 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = " luz")
-
+@Entity(tableName = "luz")
 public class LightEntity {
     @PrimaryKey(autoGenerate = true)
     public int id;

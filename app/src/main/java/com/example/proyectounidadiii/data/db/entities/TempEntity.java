@@ -5,6 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "temperatura")
+
 public class TempEntity {
     @PrimaryKey(autoGenerate = true)
 

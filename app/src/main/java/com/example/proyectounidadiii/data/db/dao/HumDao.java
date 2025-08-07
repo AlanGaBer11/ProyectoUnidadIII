@@ -1,6 +1,7 @@
 package com.example.proyectounidadiii.data.db.dao;
 
 import androidx.lifecycle.LiveData;
+import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -9,6 +10,7 @@ import com.example.proyectounidadiii.data.db.entities.HumEntity;
 
 import java.util.List;
 
+@Dao
 public interface HumDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insert(HumEntity entity);

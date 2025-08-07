@@ -1,9 +1,11 @@
 package com.example.proyectounidadiii;
 
+import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
 
+import com.example.proyectounidadiii.viewmodels.SharedViewModel;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 

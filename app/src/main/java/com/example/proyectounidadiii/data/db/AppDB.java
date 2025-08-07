@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.room.Database;
 import androidx.room.Room;
+import androidx.room.Dao;
 import androidx.room.RoomDatabase;
 
 import com.example.proyectounidadiii.data.db.dao.HumDao;

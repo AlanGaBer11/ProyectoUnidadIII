@@ -24,11 +24,11 @@
     <fragment
         android:id="@+id/nav_database"
         android:name="com.example.proyectounidadiii.ui.database.DataBaseFragment"
-        android:label="Base de Datos"
+        android:label="Gráficos históricos"
         tools:layout="@layout/fragment_data_base" />
     <fragment
         android:id="@+id/nav_charts"
         android:name="com.example.proyectounidadiii.ui.charts.ChartsFragment"
-        android:label="Graficas"
+        android:label="Graficas en tiempo real"
         tools:layout="@layout/fragment_charts" />
 </navigation>

@@ -18,8 +18,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.proyectounidadiii.R;
-import com.example.proyectounidadiii.databinding.FragmentBluetoothBinding;
+import com.example.proyectounidadiii.data.db.entities.HumEntity;
+import com.example.proyectounidadiii.data.db.entities.LightEntity;
+import com.example.proyectounidadiii.data.db.entities.MovEntity;
+import com.example.proyectounidadiii.data.db.entities.TempEntity;
 import com.example.proyectounidadiii.databinding.FragmentSensorsBinding;
+import com.example.proyectounidadiii.viewmodels.SensorDBViewModel;
 import com.example.proyectounidadiii.viewmodels.SharedViewModel;
 
 import java.text.SimpleDateFormat;
@@ -32,7 +36,12 @@ public class SensorsFragment extends Fragment {
     private SensorsViewModel mViewModel;
     private FragmentSensorsBinding binding;
     private SharedViewModel svm;
+    private SensorDBViewModel sensorDB;
     private BluetoothAdapter btAdapter;
+    private String lastTemp = "";
+    private String lastHum = "";
+    private String lastLight = "";
+    private String lastMov = "";
 
     public static SensorsFragment newInstance() {
         return new SensorsFragment();
@@ -43,17 +52,14 @@ public class SensorsFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentSensorsBinding.inflate(inflater, container, false);
 
-        // Se accede a la SharedViewModel para obtener los datos compartidos
+        // Inicializar ViewModels
         svm = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
-
-        // Se obtiene el adaptador Bluetooth (aunque aquí no se utiliza directamente)
+        sensorDB = new ViewModelProvider(this).get(SensorDBViewModel.class);
         btAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        // Observador del estado de la conexión Bluetooth
+        // Observador del estado Bluetooth
         svm.getEstado().observe(getViewLifecycleOwner(), estado -> {
             binding.txtEstado.setText("Estado: " + estado);
-
-
             if (estado != null && estado.contains("Conectado")) {
                 binding.statusIcon.setImageResource(R.drawable.bluetooth_connected);
                 binding.statusIcon.setColorFilter(Color.GREEN);
@@ -63,147 +69,160 @@ public class SensorsFragment extends Fragment {
             }
         });
 
-        // Observador de los datos del DHT (Temp y Hum)
+        // Observador de datos de sensores
         svm.getSensorData().observe(getViewLifecycleOwner(), data -> {
             if (data != null) {
-                // Sistema activo
-                binding.txtPower.setText("Sistema: " + (data.isSistemaActivo() ? "Encendido" : "Apagado"));
-                binding.powerIcon.setImageResource(data.isSistemaActivo() ? R.drawable.power : R.drawable.power_off);
-                binding.powerIcon.setColorFilter(data.isSistemaActivo() ? Color.GREEN : Color.RED);
-
-                // Modo ahorro
-                binding.txtMode.setText("Modo: " + (data.isModoAhorro() ? "Ahorro" : "Normal"));
-                binding.modeIcon.setColorFilter(data.isModoAhorro() ? Color.GREEN : Color.GRAY);
-
-
-                String estadoSistema;
-                if (!data.isSistemaActivo()) {
-                    estadoSistema = "Estado: STANDBY";
-                } else if (data.isModoAhorro()) {
-                    estadoSistema = "Estado: AHORRO ENERGIA";
-                } else if (data.isPresencia()) {
-                    // Determinar estado según condiciones ambientales
-                    boolean tempOptima = (data.getTemperatura() >= 20.0 && data.getTemperatura() <= 24.0);
-                    boolean humOptima = (data.getHumedad() >= 40.0 && data.getHumedad() <= 60.0);
-                    boolean luzOptima = (data.getLuz() >= 300 && data.getLuz() <= 800);
-
-                    if (tempOptima && humOptima && luzOptima) {
-                        estadoSistema = "Estado: ÓPTIMO";
-                    } else if ((tempOptima || humOptima) && luzOptima) {
-                        estadoSistema = "Estado: ACEPTABLE";
-                    } else {
-                        estadoSistema = "Estado: AJUSTANDO...";
-                    }
-                } else {
-                    estadoSistema = "Estado: ESPERANDO PRESENCIA";
-                }
-                binding.txtEstadoSistema.setText(estadoSistema);
-
-                // Temperatura
-                binding.txtTemp.setText("Temperatura: " + data.getTemperatura() + " °C");
-
-                // Humedad
-                binding.txtHum.setText("Humedad: " + data.getHumedad() + " %");
-
-                // Temperatura configurada
-                binding.txtConfig.setText("Temp. config: " + data.getConfigTemp() + " °C");
-
-                // Luz
-                // Luz - Implementación mejorada
-                int luzValue = Math.min(data.getLuz(), 1000); // Asegurar que no exceda el máximo
-                binding.txtLdr.setText("Intensidad: " + luzValue + " lux");
-                // Actualizar ProgressBar
-                binding.lightProgress.setProgress(luzValue);
-
-                // Cambiar color del ProgressBar según el rango
-                LayerDrawable progressBarDrawable = (LayerDrawable) binding.lightProgress.getProgressDrawable();
-                Drawable progressDrawable = progressBarDrawable.getDrawable(1); // Obtener la capa de progreso
-
-                if (luzValue < 300 || luzValue > 800) {
-                    // Fuera de rango - Rojo
-                    progressDrawable.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
-                    binding.luzStatus.setVisibility(View.VISIBLE); // Mostrar icono de advertencia
-                } else if (luzValue >= 300 && luzValue <= 500) {
-                    // Rango bajo - Amarillo
-                    progressDrawable.setColorFilter(Color.YELLOW, PorterDuff.Mode.SRC_IN);
-                    binding.luzStatus.setVisibility(View.GONE);
-                } else {
-                    // Rango óptimo - Verde
-                    progressDrawable.setColorFilter(Color.GREEN, PorterDuff.Mode.SRC_IN);
-                    binding.luzStatus.setVisibility(View.GONE);
-                }
-
-// Forzar redibujado del ProgressBar
-                binding.lightProgress.invalidate();
-
-                // Movimiento
-                binding.txtMov.setText(data.isPresencia() ? "Movimiento detectado" : "Sin movimiento detectado");
-
-                // Cambiar icono y color según detección de movimiento
-                if (data.isPresencia()) {
-                    binding.motionIcon.setImageResource(R.drawable.power);
-                    binding.motionIcon.setColorFilter(Color.GREEN);
-                    binding.txtUltimoMovimiento.setText("Último movimiento: " + new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date()));
-                } else {
-                    binding.motionIcon.setImageResource(R.drawable.power_off);
-                    binding.motionIcon.setColorFilter(Color.GRAY);
-                }
-
-                // SOLUCIÓN 3: LEDs - Resetear todos los LEDs a gris primero
-                resetAllLeds();
-
-                // Aplicar colores según la lógica exacta del ESP32
-                if (!data.isSistemaActivo()) {
-                    // Solo LED azul en STANDBY
-                    binding.ledAzul.setColorFilter(Color.BLUE);
-                } else if (data.isModoAhorro()) {
-                    // LED azul parpadeando en modo ahorro (simulamos con color azul fijo)
-                    binding.ledAzul.setColorFilter(Color.BLUE);
-                } else {
-                    // Sistema activo - aplicar lógica de condiciones ambientales
-                    boolean tempOptima = (data.getTemperatura() >= 20.0 && data.getTemperatura() <= 24.0);
-                    boolean humOptima = (data.getHumedad() >= 40.0 && data.getHumedad() <= 60.0);
-                    boolean luzOptima = (data.getLuz() >= 300 && data.getLuz() <= 800);
-
-                    if (tempOptima && humOptima && luzOptima) {
-                        binding.ledVerde.setColorFilter(Color.GREEN); // Condiciones óptimas
-                    } else if ((tempOptima || humOptima) && luzOptima) {
-                        binding.ledAmarillo.setColorFilter(Color.YELLOW); // Condiciones aceptables
-                    } else {
-                        binding.ledRojo.setColorFilter(Color.RED); // Necesita ajustes
-                    }
-
-                    // LED azul adicional si la luz es muy baja (< 100 según ESP32)
-                    if (data.getLuz() < 100) {
-                        binding.ledAzul.setColorFilter(Color.BLUE);
-                    }
-                }
-
-                // Tiempo de estudio
-                long tiempo = data.getTiempoEstudio(); // valor recibido desde el ESP32
-                tiempo = tiempo * 1000;
-
-                String tiempoFormateado = String.format("%02d:%02d:%02d",
-                        TimeUnit.MILLISECONDS.toHours(tiempo),
-                        TimeUnit.MILLISECONDS.toMinutes(tiempo) % 60,
-                        TimeUnit.MILLISECONDS.toSeconds(tiempo) % 60);
-
-                binding.txtTiempoEstudio.setText(tiempoFormateado);
-
-                // Solo calcular hora de inicio si hay tiempo de estudio
-                if (tiempo > 0) {
-                    long tiempoInicioMillis = System.currentTimeMillis() - tiempo;
-                    String horaInicio = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(tiempoInicioMillis));
-                    binding.txtInicioEstudio.setText("Iniciado: " + horaInicio);
-                } else {
-                    binding.txtInicioEstudio.setText("Iniciado: --");
-                }
+                updateUI(data);
+                saveSensorData(data);
             }
         });
+
         return binding.getRoot();
     }
 
-    // Método para resetear todos los LEDs a color gris
+    private void updateUI(SharedViewModel.SensorData data) {
+        // Sistema activo
+        binding.txtPower.setText("Sistema: " + (data.isSistemaActivo() ? "Encendido" : "Apagado"));
+        binding.powerIcon.setImageResource(data.isSistemaActivo() ? R.drawable.power : R.drawable.power_off);
+        binding.powerIcon.setColorFilter(data.isSistemaActivo() ? Color.GREEN : Color.RED);
+
+        // Modo ahorro
+        binding.txtMode.setText("Modo: " + (data.isModoAhorro() ? "Ahorro" : "Normal"));
+        binding.modeIcon.setColorFilter(data.isModoAhorro() ? Color.GREEN : Color.GRAY);
+
+        // Estado del sistema
+        String estadoSistema;
+        if (!data.isSistemaActivo()) {
+            estadoSistema = "Estado: STANDBY";
+        } else if (data.isModoAhorro()) {
+            estadoSistema = "Estado: AHORRO ENERGIA";
+        } else if (data.isPresencia()) {
+            boolean tempOptima = (data.getTemperatura() >= 20.0 && data.getTemperatura() <= 24.0);
+            boolean humOptima = (data.getHumedad() >= 40.0 && data.getHumedad() <= 60.0);
+            boolean luzOptima = (data.getLuz() >= 300 && data.getLuz() <= 800);
+
+            if (tempOptima && humOptima && luzOptima) {
+                estadoSistema = "Estado: ÓPTIMO";
+            } else if ((tempOptima || humOptima) && luzOptima) {
+                estadoSistema = "Estado: ACEPTABLE";
+            } else {
+                estadoSistema = "Estado: AJUSTANDO...";
+            }
+        } else {
+            estadoSistema = "Estado: ESPERANDO PRESENCIA";
+        }
+        binding.txtEstadoSistema.setText(estadoSistema);
+
+        // Datos de sensores
+        binding.txtTemp.setText("Temperatura: " + data.getTemperatura() + " °C");
+        binding.txtHum.setText("Humedad: " + data.getHumedad() + " %");
+        binding.txtConfig.setText("Temp. config: " + data.getConfigTemp() + " °C");
+
+        // Luz y ProgressBar
+        int luzValue = Math.min(data.getLuz(), 1000);
+        binding.txtLdr.setText("Intensidad: " + luzValue + " lux");
+        binding.lightProgress.setProgress(luzValue);
+
+        LayerDrawable progressBarDrawable = (LayerDrawable) binding.lightProgress.getProgressDrawable();
+        Drawable progressDrawable = progressBarDrawable.getDrawable(1);
+
+        if (luzValue < 300 || luzValue > 800) {
+            progressDrawable.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
+            binding.luzStatus.setVisibility(View.VISIBLE);
+        } else if (luzValue >= 300 && luzValue <= 500) {
+            progressDrawable.setColorFilter(Color.YELLOW, PorterDuff.Mode.SRC_IN);
+            binding.luzStatus.setVisibility(View.GONE);
+        } else {
+            progressDrawable.setColorFilter(Color.GREEN, PorterDuff.Mode.SRC_IN);
+            binding.luzStatus.setVisibility(View.GONE);
+        }
+        binding.lightProgress.invalidate();
+
+        // Movimiento
+        binding.txtMov.setText(data.isPresencia() ? "Movimiento detectado" : "Sin movimiento detectado");
+        if (data.isPresencia()) {
+            binding.motionIcon.setImageResource(R.drawable.power);
+            binding.motionIcon.setColorFilter(Color.GREEN);
+            binding.txtUltimoMovimiento.setText("Último movimiento: " + new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date()));
+        } else {
+            binding.motionIcon.setImageResource(R.drawable.power_off);
+            binding.motionIcon.setColorFilter(Color.GRAY);
+        }
+
+        // LEDs
+        resetAllLeds();
+        if (!data.isSistemaActivo()) {
+            binding.ledAzul.setColorFilter(Color.BLUE);
+        } else if (data.isModoAhorro()) {
+            binding.ledAzul.setColorFilter(Color.BLUE);
+        } else {
+            boolean tempOptima = (data.getTemperatura() >= 20.0 && data.getTemperatura() <= 24.0);
+            boolean humOptima = (data.getHumedad() >= 40.0 && data.getHumedad() <= 60.0);
+            boolean luzOptima = (data.getLuz() >= 300 && data.getLuz() <= 800);
+
+            if (tempOptima && humOptima && luzOptima) {
+                binding.ledVerde.setColorFilter(Color.GREEN);
+            } else if ((tempOptima || humOptima) && luzOptima) {
+                binding.ledAmarillo.setColorFilter(Color.YELLOW);
+            } else {
+                binding.ledRojo.setColorFilter(Color.RED);
+            }
+
+            if (data.getLuz() < 100) {
+                binding.ledAzul.setColorFilter(Color.BLUE);
+            }
+        }
+
+        // Tiempo de estudio
+        long tiempo = data.getTiempoEstudio() * 1000;
+        String tiempoFormateado = String.format("%02d:%02d:%02d",
+                TimeUnit.MILLISECONDS.toHours(tiempo),
+                TimeUnit.MILLISECONDS.toMinutes(tiempo) % 60,
+                TimeUnit.MILLISECONDS.toSeconds(tiempo) % 60);
+        binding.txtTiempoEstudio.setText(tiempoFormateado);
+
+        if (tiempo > 0) {
+            long tiempoInicioMillis = System.currentTimeMillis() - tiempo;
+            String horaInicio = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(tiempoInicioMillis));
+            binding.txtInicioEstudio.setText("Iniciado: " + horaInicio);
+        } else {
+            binding.txtInicioEstudio.setText("Iniciado: --");
+        }
+    }
+
+    private void saveSensorData(SharedViewModel.SensorData data) {
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        String time = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+
+        // Guardar temperatura si ha cambiado
+        String currentTemp = String.valueOf(data.getTemperatura());
+        if (!lastTemp.equals(currentTemp)) {
+            lastTemp = currentTemp;
+            sensorDB.addTemp(new TempEntity(data.getTemperatura(), date, time));
+        }
+
+        // Guardar humedad si ha cambiado
+        String currentHum = String.valueOf(data.getHumedad());
+        if (!lastHum.equals(currentHum)) {
+            lastHum = currentHum;
+            sensorDB.addHum(new HumEntity(data.getHumedad(), date, time));
+        }
+
+        // Guardar luz si ha cambiado
+        String currentLight = String.valueOf(data.getLuz());
+        if (!lastLight.equals(currentLight)) {
+            lastLight = currentLight;
+            sensorDB.addLight(new LightEntity(data.getLuz(), date, time));
+        }
+
+        // Guardar movimiento si ha cambiado
+        String currentMov = data.isPresencia() ? "1" : "0";
+        if (!lastMov.equals(currentMov)) {
+            lastMov = currentMov;
+            sensorDB.addMov(new MovEntity(currentMov, date, time));
+        }
+    }
+
     private void resetAllLeds() {
         binding.ledRojo.setColorFilter(Color.GRAY);
         binding.ledAmarillo.setColorFilter(Color.GRAY);
@@ -215,6 +234,11 @@ public class SensorsFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mViewModel = new ViewModelProvider(this).get(SensorsViewModel.class);
-        // TODO: Use the ViewModel
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

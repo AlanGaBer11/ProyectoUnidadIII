@@ -17,12 +17,12 @@
             android:icon="@drawable/sensors"
             android:title="Sensores" />
         <item
-            android:id="@+id/nav_database"
-            android:icon="@drawable/database"
-            android:title="Base de Datos" />
-        <item
             android:id="@+id/nav_charts"
             android:icon="@drawable/chart_data"
-            android:title="Graficas" />
+            android:title="Graficas en tiempo real" />
+        <item
+            android:id="@+id/nav_database"
+            android:icon="@drawable/database"
+            android:title="Gráficos históricos" />
     </group>
 </menu>

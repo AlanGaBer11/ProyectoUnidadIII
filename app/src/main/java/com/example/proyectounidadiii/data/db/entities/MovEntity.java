@@ -6,18 +6,19 @@ import androidx.room.PrimaryKey;
 
 @Entity(tableName = "movimiento")
 public class MovEntity {
-    @PrimaryKey(autoGenerate = true)
 
+    @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public boolean value;
+    public String value;
+
     @NonNull
     public String date;
+
     @NonNull
     public String time;
 
-
-    public MovEntity(boolean value,  @NonNull String date, @NonNull String time) {
+    public MovEntity(String value, @NonNull String date, @NonNull String time) {
         this.value = value;
         this.date = date;
         this.time = time;

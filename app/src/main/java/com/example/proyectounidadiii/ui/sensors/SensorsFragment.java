@@ -43,6 +43,14 @@ public class SensorsFragment extends Fragment {
     private String lastLight = "";
     private String lastMov = "";
 
+    // ===== RANGOS ÓPTIMOS - SINCRONIZADOS CON ESP32 =====
+    private static final float TEMP_MIN = 18.0f;
+    private static final float TEMP_MAX = 30.0f;
+    private static final float HUM_MIN = 30.0f;
+    private static final float HUM_MAX = 60.0f;
+    private static final int LUZ_MIN = 50;
+    private static final int LUZ_MAX = 900;
+
     public static SensorsFragment newInstance() {
         return new SensorsFragment();
     }
@@ -90,46 +98,65 @@ public class SensorsFragment extends Fragment {
         binding.txtMode.setText("Modo: " + (data.isModoAhorro() ? "Ahorro" : "Normal"));
         binding.modeIcon.setColorFilter(data.isModoAhorro() ? Color.GREEN : Color.GRAY);
 
+        // Verificar condiciones óptimas con rangos del ESP32
+        boolean tempOptima = (data.getTemperatura() >= TEMP_MIN && data.getTemperatura() <= TEMP_MAX);
+        boolean humOptima = (data.getHumedad() >= HUM_MIN && data.getHumedad() <= HUM_MAX);
+        boolean luzOptima = (data.getLuz() >= LUZ_MIN && data.getLuz() <= LUZ_MAX);
+
+        // Contar condiciones óptimas
+        int condicionesOptimas = 0;
+        if (tempOptima) condicionesOptimas++;
+        if (humOptima) condicionesOptimas++;
+        if (luzOptima) condicionesOptimas++;
+
         // Estado del sistema
         String estadoSistema;
         if (!data.isSistemaActivo()) {
             estadoSistema = "Estado: STANDBY";
         } else if (data.isModoAhorro()) {
             estadoSistema = "Estado: AHORRO ENERGIA";
-        } else if (data.isPresencia()) {
-            boolean tempOptima = (data.getTemperatura() >= 20.0 && data.getTemperatura() <= 24.0);
-            boolean humOptima = (data.getHumedad() >= 40.0 && data.getHumedad() <= 60.0);
-            boolean luzOptima = (data.getLuz() >= 300 && data.getLuz() <= 800);
-
-            if (tempOptima && humOptima && luzOptima) {
-                estadoSistema = "Estado: ÓPTIMO";
-            } else if ((tempOptima || humOptima) && luzOptima) {
-                estadoSistema = "Estado: ACEPTABLE";
-            } else {
-                estadoSistema = "Estado: AJUSTANDO...";
-            }
-        } else {
+        } else if (!data.isPresencia()) {
             estadoSistema = "Estado: ESPERANDO PRESENCIA";
+        } else {
+            // Sistema activo con presencia - usar misma lógica que ESP32
+            if (condicionesOptimas == 3) {
+                estadoSistema = "Estado: ÓPTIMO";
+            } else if (condicionesOptimas == 2) {
+                estadoSistema = "Estado: BUENO";
+            } else if (condicionesOptimas == 1) {
+                estadoSistema = "Estado: NECESITA MEJORAS";
+            } else {
+                estadoSistema = "Estado: CONDICIONES INADECUADAS";
+            }
         }
         binding.txtEstadoSistema.setText(estadoSistema);
 
-        // Datos de sensores
-        binding.txtTemp.setText("Temperatura: " + data.getTemperatura() + " °C");
-        binding.txtHum.setText("Humedad: " + data.getHumedad() + " %");
+        // Datos de sensores con indicadores de estado
+        binding.txtTemp.setText(String.format("Temperatura: %.1f °C %s",
+                data.getTemperatura(),
+                tempOptima ? "✓" : "⚠"));
+
+        binding.txtHum.setText(String.format("Humedad: %.1f %% %s",
+                data.getHumedad(),
+                humOptima ? "✓" : "⚠"));
+
         binding.txtConfig.setText("Temp. config: " + data.getConfigTemp() + " °C");
 
-        // Luz y ProgressBar
+        // Luz y ProgressBar - usar rangos del ESP32
         int luzValue = Math.min(data.getLuz(), 1000);
-        binding.txtLdr.setText("Intensidad: " + luzValue + " lux");
+        binding.txtLdr.setText(String.format("Intensidad: %d lux %s",
+                luzValue,
+                luzOptima ? "✓" : "⚠"));
         binding.lightProgress.setProgress(luzValue);
 
         LayerDrawable progressBarDrawable = (LayerDrawable) binding.lightProgress.getProgressDrawable();
         Drawable progressDrawable = progressBarDrawable.getDrawable(1);
 
-        if (luzValue < 300 || luzValue > 800) {
+        // Actualizar color del ProgressBar según rangos del ESP32
+        if (luzValue < LUZ_MIN || luzValue > LUZ_MAX) {
             progressDrawable.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
             binding.luzStatus.setVisibility(View.VISIBLE);
-        } else if (luzValue >= 300 && luzValue <= 500) {
+        } else if (luzValue >= LUZ_MIN && luzValue <= (LUZ_MIN + LUZ_MAX) / 2) {
             progressDrawable.setColorFilter(Color.YELLOW, PorterDuff.Mode.SRC_IN);
             binding.luzStatus.setVisibility(View.GONE);
         } else {
@@ -149,27 +176,22 @@ public class SensorsFragment extends Fragment {
             binding.motionIcon.setColorFilter(Color.GRAY);
         }
 
-        // LEDs
+        // LEDs - SINCRONIZADO CON LÓGICA DEL ESP32
         resetAllLeds();
         if (!data.isSistemaActivo()) {
+            // Modo standby
             binding.ledAzul.setColorFilter(Color.BLUE);
         } else if (data.isModoAhorro()) {
+            // Modo ahorro - parpadeo simulado con azul
             binding.ledAzul.setColorFilter(Color.BLUE);
         } else {
-            boolean tempOptima = (data.getTemperatura() >= 20.0 && data.getTemperatura() <= 24.0);
-            boolean humOptima = (data.getHumedad() >= 40.0 && data.getHumedad() <= 60.0);
-            boolean luzOptima = (data.getLuz() >= 300 && data.getLuz() <= 800);
-
-            if (tempOptima && humOptima && luzOptima) {
-                binding.ledVerde.setColorFilter(Color.GREEN);
-            } else if ((tempOptima || humOptima) && luzOptima) {
-                binding.ledAmarillo.setColorFilter(Color.YELLOW);
+            // Sistema activo - usar misma lógica que ESP32
+            if (condicionesOptimas == 3) {
+                binding.ledVerde.setColorFilter(Color.GREEN);    // Todas las condiciones óptimas
+            } else if (condicionesOptimas == 2) {
+                binding.ledAmarillo.setColorFilter(Color.YELLOW); // Dos condiciones óptimas
             } else {
-                binding.ledRojo.setColorFilter(Color.RED);
-            }
-
-            if (data.getLuz() < 100) {
-                binding.ledAzul.setColorFilter(Color.BLUE);
+                binding.ledRojo.setColorFilter(Color.RED);        // Una o ninguna condición óptima
             }
         }
 
@@ -188,6 +210,13 @@ public class SensorsFragment extends Fragment {
         } else {
             binding.txtInicioEstudio.setText("Iniciado: --");
         }
+
+        // Debug info (opcional - puedes comentar en producción)
+        System.out.println(String.format("Android LEDs - T:%s H:%s L:%s -> Condiciones:%d",
+                tempOptima ? "OK" : "NO",
+                humOptima ? "OK" : "NO",
+                luzOptima ? "OK" : "NO",
+                condicionesOptimas));
     }
 
     private void saveSensorData(SharedViewModel.SensorData data) {

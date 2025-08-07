@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModelProvider;
 
 import android.bluetooth.BluetoothAdapter;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -65,7 +68,7 @@ public class SensorsFragment extends Fragment {
             if (data != null) {
                 // Sistema activo
                 binding.txtPower.setText("Sistema: " + (data.isSistemaActivo() ? "Encendido" : "Apagado"));
-                binding.powerIcon.setImageResource(data.isSistemaActivo() ? R.drawable.power: R.drawable.power_off);
+                binding.powerIcon.setImageResource(data.isSistemaActivo() ? R.drawable.power : R.drawable.power_off);
                 binding.powerIcon.setColorFilter(data.isSistemaActivo() ? Color.GREEN : Color.RED);
 
                 // Modo ahorro
@@ -106,11 +109,32 @@ public class SensorsFragment extends Fragment {
                 binding.txtConfig.setText("Temp. config: " + data.getConfigTemp() + " °C");
 
                 // Luz
-                binding.txtLdr.setText("Intensidad: " + data.getLuz());
-
-                // SOLUCIÓN 4: Corregir la barra de progreso de luz
+                // Luz - Implementación mejorada
                 int luzValue = Math.min(data.getLuz(), 1000); // Asegurar que no exceda el máximo
+                binding.txtLdr.setText("Intensidad: " + luzValue + " lux");
+                // Actualizar ProgressBar
                 binding.lightProgress.setProgress(luzValue);
+
+                // Cambiar color del ProgressBar según el rango
+                LayerDrawable progressBarDrawable = (LayerDrawable) binding.lightProgress.getProgressDrawable();
+                Drawable progressDrawable = progressBarDrawable.getDrawable(1); // Obtener la capa de progreso
+
+                if (luzValue < 300 || luzValue > 800) {
+                    // Fuera de rango - Rojo
+                    progressDrawable.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
+                    binding.luzStatus.setVisibility(View.VISIBLE); // Mostrar icono de advertencia
+                } else if (luzValue >= 300 && luzValue <= 500) {
+                    // Rango bajo - Amarillo
+                    progressDrawable.setColorFilter(Color.YELLOW, PorterDuff.Mode.SRC_IN);
+                    binding.luzStatus.setVisibility(View.GONE);
+                } else {
+                    // Rango óptimo - Verde
+                    progressDrawable.setColorFilter(Color.GREEN, PorterDuff.Mode.SRC_IN);
+                    binding.luzStatus.setVisibility(View.GONE);
+                }
+
+// Forzar redibujado del ProgressBar
+                binding.lightProgress.invalidate();
 
                 // Movimiento
                 binding.txtMov.setText(data.isPresencia() ? "Movimiento detectado" : "Sin movimiento detectado");

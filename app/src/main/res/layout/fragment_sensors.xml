@@ -1,13 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout3"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.sensors.SensorsFragment">
 
+    <!-- Título: Sensores -->
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello" />
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Sensores"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_conversion_absoluteHeight="32dp"
+        tools:layout_conversion_absoluteWidth="411dp" />
 
-</FrameLayout>
+    <!-- Estado Bluetooth -->
+    <TextView
+        android:id="@+id/txt_estado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Estado: Desconectado"
+        android:textColor="#555"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        tools:layout_conversion_absoluteHeight="422dp"
+        tools:layout_conversion_absoluteWidth="0dp" />
+
+    <!-- DHT -->
+    <TextView
+        android:id="@+id/txt_dht"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DHT11"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_estado"
+        tools:layout_conversion_absoluteHeight="27dp"
+        tools:layout_conversion_absoluteWidth="62dp" />
+
+    <!-- Humedad -->
+    <TextView
+        android:id="@+id/txt_hum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Humedad: -- %"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_dht"
+        tools:layout_conversion_absoluteHeight="24dp"
+        tools:layout_conversion_absoluteWidth="115dp" />
+
+    <!-- Temperatura -->
+    <TextView
+        android:id="@+id/txt_temp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Temperatura: -- °C"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_hum"
+        tools:layout_conversion_absoluteHeight="24dp"
+        tools:layout_conversion_absoluteWidth="143dp" />
+
+    <!-- FOTORESISTENCIA -->
+    <TextView
+        android:id="@+id/txt_sensor_luz"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fotoresistencia"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_temp"
+        tools:layout_conversion_absoluteHeight="27dp"
+        tools:layout_conversion_absoluteWidth="141dp" />
+
+    <!-- LDR -->
+    <TextView
+        android:id="@+id/txt_ldr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Valor LDR: --"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_sensor_luz"
+        tools:layout_conversion_absoluteHeight="24dp"
+        tools:layout_conversion_absoluteWidth="97dp" />
+
+    <!-- Luz -->
+    <TextView
+        android:id="@+id/txt_luz"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Luz: -- %"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_ldr"
+        tools:layout_conversion_absoluteHeight="24dp"
+        tools:layout_conversion_absoluteWidth="64dp" />
+
+    <!-- FOTORESISTENCIA -->
+    <TextView
+        android:id="@+id/txt_movimiento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="80dp"
+        android:text="Movimiento"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_temp"
+        tools:layout_conversion_absoluteHeight="27dp"
+        tools:layout_conversion_absoluteWidth="141dp" />
+
+    <!-- Luz -->
+    <TextView
+        android:id="@+id/txt_mov"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:text=""
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_ldr"
+        tools:layout_conversion_absoluteHeight="24dp"
+        tools:layout_conversion_absoluteWidth="64dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,8 +7,9 @@ import androidx.room.Query;
 
 import com.example.proyectounidadiii.data.db.entities.HumEntity;
 
-public interface HumDao {
+import java.util.List;
 
+public interface HumDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insert(HumEntity entity);
 

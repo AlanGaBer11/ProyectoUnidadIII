@@ -87,57 +87,62 @@ public class SharedViewModel extends ViewModel {
         }
     }
 
-    private void parseSensorData(String rawData) {
-        if (rawData.startsWith("OK:") || rawData.startsWith("ERROR:")) {
-            Log.d("SharedViewModel", "Respuesta del ESP32: " + rawData);
-            return;
-        }
+    private void parseSensorData(String trama) {
+        Log.d("SharedViewModel", "Trama recibida: " + trama); // Nuevo log
 
-        String[] dataPairs = rawData.split("\\|");
-        SensorData data = new SensorData();
+        String[] partes = trama.split("\\|");
+        SensorData actual = sensorData.getValue();
+        if (actual == null) actual = new SensorData(); // Asegura instancia
 
-        for (String pair : dataPairs) {
-            String[] keyValue = pair.split(":");
-            if (keyValue.length == 2) {
-                String key = keyValue[0];
-                String value = keyValue[1];
+        for (String parte : partes) {
+            if (parte.trim().isEmpty()) continue;
 
-                try {
-                    switch (key) {
-                        case "T":
-                            data.setTemperatura(Float.parseFloat(value));
-                            break;
-                        case "H":
-                            data.setHumedad(Float.parseFloat(value));
-                            break;
-                        case "L":
-                            data.setLuz(Integer.parseInt(value));
-                            break;
-                        case "P":
-                            data.setPresencia(Integer.parseInt(value) == 1);
-                            break;
-                        case "S":
-                            data.setSistemaActivo(Integer.parseInt(value) == 1);
-                            break;
-                        case "M":
-                            data.setModoAhorro(Integer.parseInt(value) == 1);
-                            break;
-                        case "C":
-                            data.setConfigTemp(Integer.parseInt(value));
-                            break;
-                        case "E":
-                            data.setTiempoEstudio(Long.parseLong(value));
-                            break;
-                        default:
-                            Log.w("SharedViewModel", "Clave desconocida: " + key);
-                    }
-                } catch (NumberFormatException e) {
-                    Log.e("SharedViewModel", "Error parseando valor: " + key + "=" + value, e);
+            String[] claveValor = parte.split(":");
+            if (claveValor.length != 2) {
+                Log.w("SharedViewModel", "Trama mal formada: " + parte);
+                continue;
+            }
+
+            String clave = claveValor[0];
+            String valor = claveValor[1];
+
+            try {
+                switch (clave) {
+                    case "T":
+                        actual.setTemperatura(Float.parseFloat(valor));
+                        break;
+                    case "H":
+                        actual.setHumedad(Float.parseFloat(valor));
+                        break;
+                    case "L":
+                        actual.setLuz(Integer.parseInt(valor));
+                        break;
+                    case "P":
+                        actual.setPresencia(valor.equals("1"));
+                        break;
+                    case "S":
+                        actual.setSistemaActivo(valor.equals("1"));
+                        break;
+                    case "M":
+                        actual.setModoAhorro(valor.equals("1"));
+                        break;
+                    case "C":
+                        actual.setConfigTemp(Integer.parseInt(valor));
+                        break;
+                    case "E":
+                        actual.setTiempoEstudio(Long.parseLong(valor));
+                        break;
+                    default:
+                        Log.w("SharedViewModel", "Clave desconocida: " + clave);
                 }
+            } catch (Exception e) {
+                Log.e("SharedViewModel", "Error al parsear " + clave + ":" + valor, e);
             }
         }
-        sensorData.postValue(data);
+
+        sensorData.postValue(actual);
     }
+
 
     public LiveData<SensorData> getSensorData() {
         return sensorData;
@@ -171,6 +176,16 @@ public class SharedViewModel extends ViewModel {
 
     public void setDispositivoGuardado(BluetoothDevice dispositivo) {
         this.dispositivoGuardado = dispositivo;
+    }
+
+    public void enviarComando(String comando) {
+        if (out != null) {
+            try {
+                out.write((comando + "\n").getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     // Clase interna para contener datos
